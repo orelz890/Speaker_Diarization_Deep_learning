@@ -26,44 +26,47 @@ do
           --in-lab-path  example/vad/${filename}.lab\
           --out-lab-path  example/fixed_vad/${filename}.lab
 
-#      # Creating the lab file
-#      python VAD/energy_VAD.py \
-#          --in-audio-dir example/audios/16k/${filename}/combined \
-#          --vad-out-dir example/audios/16k/${filename}/combined \
-#          --list exp/list.txt \
-#          --in-format ${filename}.lab
-#
-#      # run feature and x-vectors extraction
-#      python VBx/predict.py \
-#          --in-file-list exp/list.txt \
-#          --in-lab-dir example/audios/16k/${filename}/combined \
-#          --in-wav-dir example/audios/16k/${filename}/combined \
-#          --out-ark-fn exp/${filename}.ark \
-#          --out-seg-fn exp/${filename}.seg \
-#          --weights VBx/models/ResNet101_16kHz/nnet/final.onnx \
-#          --backend onnx
-#
-#      # run variational bayes on top of x-vectors
-#      python VBx/vbhmm.py \
-#          --init AHC+VB \
-#          --out-rttm-dir exp/${filename}\
-#          --xvec-ark-file exp/${filename}.ark \
-#          --segments-file exp/${filename}.seg \
-#          --xvec-transform VBx/models/ResNet101_16kHz/transform.h5 \
-#          --plda-file VBx/models/ResNet101_16kHz/plda \
-#          --threshold -0.015 \
-#          --lda-dim 128 \
-#          --Fa 0.3 \
-#          --Fb 17 \
-#          --loopP 0.99
-#
-#
-#      # check if there is ground truth .rttm file
-#      if [ -f example/rttm/${filename}.rttm ]
-#      then
-#          # run dscore
-#          python dscore/score.py -r example/rttm/${filename}.rttm -s exp/${filename}.rttm --collar 0.25 --ignore_overlaps
-#      fi
+      echo ${filename}_combined > exp/list.txt
+
+      # Creating the lab file
+      python VAD/energy_VAD.py \
+          --in-audio-dir example/audios/16k/${filename}/combined \
+          --vad-out-dir example/audios/16k/${filename}/vad \
+          --wav-name ${filename}_combined \
+          --list exp/list.txt \
+          --in-format ${filename}.lab
+
+      # run feature and x-vectors extraction
+      python VBx/predict.py \
+          --in-file-list exp/list.txt \
+          --in-lab-dir example/audios/16k/${filename}/vad \
+          --in-wav-dir example/audios/16k/${filename}/combined \
+          --out-ark-fn exp/${filename}.ark \
+          --out-seg-fn exp/${filename}.seg \
+          --weights VBx/models/ResNet101_16kHz/nnet/final.onnx \
+          --backend onnx
+
+      # run variational bayes on top of x-vectors
+      python VBx/vbhmm.py \
+          --init AHC+VB \
+          --out-rttm-dir exp/${filename}\
+          --xvec-ark-file exp/${filename}.ark \
+          --segments-file exp/${filename}.seg \
+          --xvec-transform VBx/models/ResNet101_16kHz/transform.h5 \
+          --plda-file VBx/models/ResNet101_16kHz/plda \
+          --threshold -0.015 \
+          --lda-dim 128 \
+          --Fa 0.3 \
+          --Fb 17 \
+          --loopP 0.99
+
+
+      # check if there is ground truth .rttm file
+      if [ -f example/rttm/${filename}.rttm ]
+      then
+          # run dscore
+          python dscore/score.py -r example/rttm/${filename}.rttm -s exp/${filename}.rttm --collar 0.25 --ignore_overlaps
+      fi
 
   fi
 done

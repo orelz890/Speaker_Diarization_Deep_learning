@@ -91,6 +91,7 @@ def main():
     parser.add_argument('--in-format', type=str, help="Input format")
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--median-window-length", type=int, default=50)
+    parser.add_argument("--wav-name", required=False, default="", type=str, help="input wav- <name>")
 
     args = parser.parse_args()
 
@@ -99,7 +100,10 @@ def main():
         temp_file = os.path.join(args.vad_out_dir+"/"+key+".lab_part")
         mkdir_p(os.path.dirname(args.vad_out_dir+"/"+key+".lab"))
         vad_file = os.path.join(args.vad_out_dir+"/"+key+".lab")
-        samplerate, signal = wavfile.read(args.in_audio_dir+"/"+key+".wav")
+        path = f"{args.in_audio_dir}/{key}.wav"
+        if args.wav_name != "":
+            path = f"{args.in_audio_dir}/{args.wav_name}.wav"
+        samplerate, signal = wavfile.read(path)
 
         signal = np.r_[np.zeros(samplerate//2), signal, np.zeros(samplerate//2)] # add half second of "silence" at the beginning and the end
         np.random.seed(3)  # for reproducibility
