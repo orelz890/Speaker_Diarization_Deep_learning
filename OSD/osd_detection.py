@@ -81,16 +81,27 @@ def write_to_lab_and_extract_from_wav(wav_path, writer_to_lab, write_start, writ
 def combine_wav(addition_wav_path, out_folder_path, new_wav_name):
     try:
         os.makedirs(out_folder_path)
+        os.makedirs(f"{out_folder_path}/combined")
     except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(out_folder_path):
+        if exc.errno == errno.EEXIST and (os.path.isdir(out_folder_path) or os.path.isdir(f"{out_folder_path}/combined")):
+            if os.path.isdir(out_folder_path):
+                try:
+                    os.makedirs(f"{out_folder_path}/combined")
+                except OSError as exc2:
+                    if exc2.errno == errno.EEXIST and os.path.isdir(f"{out_folder_path}/combined"):
+                        pass
+                    else:
+                        raise
             pass
         else:
             raise
-    # print(f"is exist = {out_folder_path}/{new_wav_name}.wav")
-    is_exist = os.path.exists(f"{out_folder_path}/{new_wav_name}.wav")
-    silence = AudioSegment.from_wav(
-        "/home/orelzam/PycharmProjects/pythonProject/Speaker_Diarization_project/example/audios/output_16k/silence.wav")
-    out_wav_path = f"{out_folder_path}/{new_wav_name}.wav"
+    # Check if a combined wav exist
+    is_exist = os.path.exists(f"{out_folder_path}/combined/{new_wav_name}.wav")
+    # This can cause trouble.. try:
+    # silence = AudioSegment.from_wav(os.path.abspath("../example/audios/output_16k/silence.wav"))
+    parent_path = os.path.abspath("..")
+    silence = AudioSegment.from_wav(f"{parent_path}/Speaker_Diarization_Deep_learning/example/audios/output_16k/silence.wav")
+    out_wav_path = f"{out_folder_path}/combined/{new_wav_name}.wav"
     # print(f"out_wav_path = {out_wav_path}")
     if is_exist:
         # Add silence to the last output

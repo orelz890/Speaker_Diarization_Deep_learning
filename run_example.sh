@@ -6,7 +6,11 @@ mkdir -p exp
 
 for audio in $(ls example/audios/16k)
 do
-      filename=$(echo "${audio}" | cut -f 1 -d '.')
+  filename=$(echo "${audio}" | cut -f 1 -d '.')
+  if [[ -d "example/audios/16k/${filename}" ]]
+  then
+      echo "This dir already exists.."
+  else
       echo ${filename} > exp/list.txt
 
       # Creating the lab file
@@ -21,12 +25,19 @@ do
           --in-audio-path example/audios/16k/${filename}.wav\
           --in-lab-path  example/vad/${filename}.lab\
           --out-lab-path  example/fixed_vad/${filename}.lab
+
+#      # Creating the lab file
+#      python VAD/energy_VAD.py \
+#          --in-audio-dir example/audios/16k/${filename}/combined \
+#          --vad-out-dir example/audios/16k/${filename}/combined \
+#          --list exp/list.txt \
+#          --in-format ${filename}.lab
 #
 #      # run feature and x-vectors extraction
 #      python VBx/predict.py \
 #          --in-file-list exp/list.txt \
-#          --in-lab-dir example/fixed_vad \
-#          --in-wav-dir example/audios/16k \
+#          --in-lab-dir example/audios/16k/${filename}/combined \
+#          --in-wav-dir example/audios/16k/${filename}/combined \
 #          --out-ark-fn exp/${filename}.ark \
 #          --out-seg-fn exp/${filename}.seg \
 #          --weights VBx/models/ResNet101_16kHz/nnet/final.onnx \
@@ -46,10 +57,6 @@ do
 #          --Fb 17 \
 #          --loopP 0.99
 #
-##      # Overlap speech detection
-##      python OSD/osd_detection.py \
-##          --in-audio-path example/audios/16k/${filename}.wav\
-##          --in-rttm-path  exp/${filename}/${filename}.rttm \
 #
 #      # check if there is ground truth .rttm file
 #      if [ -f example/rttm/${filename}.rttm ]
@@ -57,4 +64,6 @@ do
 #          # run dscore
 #          python dscore/score.py -r example/rttm/${filename}.rttm -s exp/${filename}.rttm --collar 0.25 --ignore_overlaps
 #      fi
+
+  fi
 done
