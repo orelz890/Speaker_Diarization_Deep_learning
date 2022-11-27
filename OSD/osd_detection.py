@@ -65,8 +65,8 @@ def source_separation(input_wav_path):
     parent_path = os.path.dirname(os.path.normpath(parent_path))
 
     est_sources = model.separate_file(path=input_wav_path)
-    torchaudio.save(f"{parent_path}/{file_name}_a.wav", est_sources[:, :, 0].detach().cpu(), 16000)
-    torchaudio.save(f"{parent_path}/{file_name}_b.wav", est_sources[:, :, 1].detach().cpu(), 16000)
+    torchaudio.save(f"{parent_path}/{file_name}_a.wav", est_sources[:, :, 0].detach().cpu(), 8000)
+    torchaudio.save(f"{parent_path}/{file_name}_b.wav", est_sources[:, :, 1].detach().cpu(), 8000)
 
     # if os.path.isfile(input_wav_path):
     #   os.remove(input_wav_path)
