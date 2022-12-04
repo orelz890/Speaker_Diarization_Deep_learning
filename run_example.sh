@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+!/usr/bin/env bash
 
 CDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
@@ -19,28 +19,49 @@ do
           --vad-out-dir example/vad \
           --list exp/list.txt \
           --in-format ${filename}.lab
+#
+#      # Overlap speech detection + making a new lab accordingly
+#      python OSD/osd_detection.py \
+#          --in-audio-path example/audios/16k/${filename}.wav\
+#          --in-lab-path  example/vad/${filename}.lab\
+#          --out-lab-path  example/fixed_vad/${filename}.lab
+#
+#      # Source separation
+#      python SS/source_separation.py \
+#          --in-audio-path example/audios/16k/${filename}.wav\
+#          --in-lab-path  example/fixed_vad/${filename}.lab\
+#
+#      echo ${filename}_combined > exp/list.txt
+#
+#      # Creating the lab file
+#      python VAD/energy_VAD.py \
+#          --in-audio-dir example/audios/16k/${filename}/combined \
+#          --vad-out-dir example/audios/16k/${filename}/vad \
+#          --wav-name ${filename}_combined \
+#          --list exp/list.txt \
+#          --in-format ${filename}.lab
 
-      # Overlap speech detection
-      python OSD/osd_detection.py \
-          --in-audio-path example/audios/16k/${filename}.wav\
-          --in-lab-path  example/vad/${filename}.lab\
-          --out-lab-path  example/fixed_vad/${filename}.lab
+#
+#      python OSD/seperate_labs.py\
+#        --in-lab-path example/audios/16k/${filename}/vad/${filename}_combined.lab\
+#        --out-regular-lab-path example/audios/16k/${filename}/vad/${filename}_regular.lab\
+#        --out-overlap-lab-path example/audios/16k/${filename}/vad/${filename}_overlap.lab
 
-      echo ${filename}_combined > exp/list.txt
-
-      # Creating the lab file
-      python VAD/energy_VAD.py \
-          --in-audio-dir example/audios/16k/${filename}/combined \
-          --vad-out-dir example/audios/16k/${filename}/vad \
-          --wav-name ${filename}_combined \
-          --list exp/list.txt \
-          --in-format ${filename}.lab
+#      # run feature and x-vectors extraction
+#      python VBx/predict.py \
+#          --in-file-list exp/list.txt \
+#          --in-lab-dir example/audios/16k/${filename}/vad \
+#          --in-wav-dir example/audios/16k/${filename}/combined \
+#          --out-ark-fn exp/${filename}.ark \
+#          --out-seg-fn exp/${filename}.seg \
+#          --weights VBx/models/ResNet101_16kHz/nnet/final.onnx \
+#          --backend onnx
 
       # run feature and x-vectors extraction
       python VBx/predict.py \
           --in-file-list exp/list.txt \
-          --in-lab-dir example/audios/16k/${filename}/vad \
-          --in-wav-dir example/audios/16k/${filename}/combined \
+          --in-lab-dir example/vad \
+          --in-wav-dir example/audios/16k/\
           --out-ark-fn exp/${filename}.ark \
           --out-seg-fn exp/${filename}.seg \
           --weights VBx/models/ResNet101_16kHz/nnet/final.onnx \

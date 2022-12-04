@@ -140,11 +140,12 @@ if __name__ == '__main__':
                 # output "labels" is an integer vector of speaker (cluster) ids
                 scr_mx = squareform(-scr_mx, checks=False)
                 lin_mat = fastcluster.linkage(
-                    scr_mx, method='average', preserve_input='False')
+                    scr_mx, method='average', preserve_input='False') # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    # scr_mx, method='average', preserve_input='False') # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 del scr_mx
                 adjust = abs(lin_mat[:, 2].min())
                 lin_mat[:, 2] += adjust
-                # Tells us how much people spock in the whole conversation!!!!!!!!!!!!!!!!!!!!!!!!!
+                # Tells us how much people spoke in the whole conversation!!!!!!!!!!!!!!!!!!!!!!!!!
                 labels1st = fcluster(lin_mat, -(thr + args.threshold) + adjust,
                     criterion='distance') - 1
             if args.init.endswith('VB'):
@@ -173,6 +174,7 @@ if __name__ == '__main__':
         mkdir_p(args.out_rttm_dir)
         with open(os.path.join(args.out_rttm_dir, f'{file_name}.rttm'), 'w') as fp:
             write_output(fp, out_labels, starts, ends)
+            # write_output(fp, labels1st, start, end)
 
         if args.output_2nd and args.init.endswith('VB') and q.shape[1] > 1:
             starts, ends, out_labels2 = merge_adjacent_labels(start, end, labels2nd)

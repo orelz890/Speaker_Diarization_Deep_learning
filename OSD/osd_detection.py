@@ -72,10 +72,8 @@ def source_separation(input_wav_path):
     #   os.remove(input_wav_path)
 
 
-def write_to_lab_and_extract_from_wav(wav_path, writer_to_lab, write_start, write_end, extract_start, extract_end,
-                                      overlap_flag):
+def write_to_lab_and_extract_from_wav(writer_to_lab, write_start, write_end, overlap_flag):
     writer_to_lab.write(str(write_start) + "\t" + str(write_end) + f"\tspeech\t{overlap_flag}\n")
-    extract_sub_recording_from_wav(wav_path, extract_start, extract_end, overlap_flag=overlap_flag)
 
 
 def combine_wav(addition_wav_path, out_folder_path, new_wav_name):
@@ -83,7 +81,8 @@ def combine_wav(addition_wav_path, out_folder_path, new_wav_name):
         os.makedirs(out_folder_path)
         os.makedirs(f"{out_folder_path}/combined")
     except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and (os.path.isdir(out_folder_path) or os.path.isdir(f"{out_folder_path}/combined")):
+        if exc.errno == errno.EEXIST and (
+                os.path.isdir(out_folder_path) or os.path.isdir(f"{out_folder_path}/combined")):
             if os.path.isdir(out_folder_path):
                 try:
                     os.makedirs(f"{out_folder_path}/combined")
@@ -100,7 +99,8 @@ def combine_wav(addition_wav_path, out_folder_path, new_wav_name):
     # This can cause trouble.. try:
     # silence = AudioSegment.from_wav(os.path.abspath("../example/audios/output_16k/silence.wav"))
     parent_path = os.path.abspath("..")
-    silence = AudioSegment.from_wav(f"{parent_path}/Speaker_Diarization_Deep_learning/example/audios/output_16k/silence.wav")
+    silence = AudioSegment.from_wav(
+        f"{parent_path}/Speaker_Diarization_Deep_learning/example/audios/output_16k/silence.wav")
     out_wav_path = f"{out_folder_path}/combined/{new_wav_name}.wav"
     # print(f"out_wav_path = {out_wav_path}")
     if is_exist:
@@ -198,6 +198,7 @@ if __name__ == '__main__':
             i = 0
             for x in reader:
                 data = x.split('\t')
+                # data = x.split(" ")
                 TalkStart = round(float(data[0]), 3)
                 TalkEnd = round(float(data[1]), 3)
                 flag_las_then_90_sec = False
@@ -205,56 +206,44 @@ if __name__ == '__main__':
                     if TalkStart <= StartOverlap[i] <= TalkEnd:
                         if EndOverlap[i] < TalkEnd:
                             if EndOverlap[i] - round(StartOverlap[i] + fixed_value, 3) >= ignoring_value:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, StartOverlap[i],
-                                                                  TalkStart, StartOverlap[i], overlap_flag=False)
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer,
-                                                                  round(StartOverlap[i] + fixed_value, 3), EndOverlap[i]
-                                                                  , StartOverlap[i], EndOverlap[i], overlap_flag=True)
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer,
-                                                                  round(EndOverlap[i] + fixed_value, 3), TalkEnd
-                                                                  , EndOverlap[i], TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, StartOverlap[i],
+                                                                  overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, round(StartOverlap[i] + fixed_value, 3),
+                                                                  EndOverlap[i], overlap_flag=True)
+                                write_to_lab_and_extract_from_wav(writer, round(EndOverlap[i] + fixed_value, 3),
+                                                                  TalkEnd, overlap_flag=False)
                             else:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd,
-                                                                  TalkStart, TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
                         else:
                             if TalkEnd - round(StartOverlap[i] + fixed_value, 3) >= ignoring_value:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, StartOverlap[i],
-                                                                  TalkStart, StartOverlap[i], overlap_flag=False)
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer,
-                                                                  round(StartOverlap[i] + fixed_value, 3), TalkEnd,
-                                                                  StartOverlap[i], TalkEnd, overlap_flag=True)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, StartOverlap[i],
+                                                                  overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, round(StartOverlap[i] + fixed_value, 3),
+                                                                  TalkEnd, overlap_flag=True)
                             else:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd,
-                                                                  TalkStart, TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
 
                     # impossible in our case because the segments r divided by fluent of speech
                     elif StartOverlap[i] <= TalkStart <= EndOverlap[i]:
                         if EndOverlap[i] < TalkEnd:
                             if EndOverlap[i] - TalkStart >= ignoring_value:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, EndOverlap[i],
-                                                                  TalkStart, EndOverlap[i], overlap_flag=True)
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer,
-                                                                  round(EndOverlap[i] + fixed_value, 3), TalkEnd,
-                                                                  EndOverlap[i], TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, EndOverlap[i], overlap_flag=True)
+                                write_to_lab_and_extract_from_wav(writer, round(EndOverlap[i] + fixed_value, 3),
+                                                                  TalkEnd, overlap_flag=False)
                             else:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd,
-                                                                  TalkStart, TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
                         else:
                             if TalkEnd - TalkStart >= ignoring_value:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd,
-                                                                  TalkStart, TalkEnd, overlap_flag=True)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=True)
                             else:
-                                write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd,
-                                                                  TalkStart, TalkEnd, overlap_flag=False)
+                                write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
                     else:
-                        write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd, TalkStart, TalkEnd,
-                                                          overlap_flag=False)
+                        write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
                     # Overlap still not over
                     if TalkEnd < EndOverlap[i]:
                         i -= 1
                 else:
-                    write_to_lab_and_extract_from_wav(SAMPLE_WAV, writer, TalkStart, TalkEnd, TalkStart, TalkEnd,
-                                                      overlap_flag=False)
+                    write_to_lab_and_extract_from_wav(writer, TalkStart, TalkEnd, overlap_flag=False)
                 i += 1
             # print(f"begin = {begging} and duration = {duration}\n")
 
