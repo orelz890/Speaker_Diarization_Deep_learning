@@ -73,8 +73,8 @@ def source_separation(input_wav_path):
 
 
 def write_to_lab_and_extract_from_wav(writer_to_lab, write_start, write_end, overlap_flag):
-    writer_to_lab.write(str(write_start) + "\t" + str(write_end) + f"\tspeech\t{overlap_flag}\n")
-
+    if not FLAG or overlap_flag:
+        writer_to_lab.write(str(write_start) + "\t" + str(write_end) + f"\tspeech\t{overlap_flag}\n")
 
 def combine_wav(addition_wav_path, out_folder_path, new_wav_name):
     try:
@@ -125,6 +125,7 @@ if __name__ == '__main__':
     parser.add_argument('--in-audio-path', type=str, help="Input audio path")
     parser.add_argument('--in-lab-path', type=str, help="Input lab path")
     parser.add_argument('--out-lab-path', type=str, help="Output lab path")
+    parser.add_argument('--only-overlap-flag', type=bool, default=False, help="It u want only overlap segments")
     args = parser.parse_args()
 
     # SAMPLE_URI = "ES2005a"
@@ -134,6 +135,7 @@ if __name__ == '__main__':
     SAMPLE_WAV = args.in_audio_path
     SAMPLE_LAB = args.in_lab_path
     SAMPLE_LAB_OUT = args.out_lab_path
+    FLAG = args.only_overlap_flag
 
     # 1. visit hf.co/pyannote/segmentation and accept user conditions
     # 2. visit hf.co/settings/tokens to create an access token
@@ -192,7 +194,7 @@ if __name__ == '__main__':
 
     # Start writing the fixed lab file with T/F if there is an overlap + source separation
     # ignoring_value = float('-inf')
-    ignoring_value = 1.5
+    ignoring_value = 1
     with open(SAMPLE_LAB, 'r') as reader:
         with open(SAMPLE_LAB_OUT, 'w') as writer:
             i = 0
@@ -265,3 +267,212 @@ if __name__ == '__main__':
     # # instance containing raw segmentation scores like the
     # # one pictured above (output)
     #
+
+
+# # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Tahel <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#
+# import argparse
+# import errno
+# import os
+# import os.path
+#
+# from pyannote.audio import Model
+# from pyannote.audio.pipelines import OverlappedSpeechDetection
+# from pyannote.audio.pipelines import VoiceActivityDetection
+# from pydub import AudioSegment
+#
+#
+# def extract_sub_recording_from_wav(input_wav_path, start_overlap, end_overlap):
+#     if (end_overlap - start_overlap) < 1:
+#         return
+#     without_extra_slash = os.path.normpath(input_wav_path)
+#     file_name = os.path.basename(without_extra_slash).removesuffix(".wav")
+#     parent_path = os.path.dirname(os.path.normpath(input_wav_path))
+#     out_folder = f"{parent_path}/{file_name}"
+#     try:
+#         os.makedirs(out_folder)
+#     except OSError as exc:  # Python >2.5
+#         if exc.errno == errno.EEXIST and os.path.isdir(out_folder):
+#             pass
+#         else:
+#             raise
+#
+#     t1 = start_overlap * 1000  # Works in milliseconds
+#     t2 = end_overlap * 1000
+#
+#     newAudio = AudioSegment.from_wav(input_wav_path)
+#     newAudio = newAudio[t1:t2]
+#     newAudio.export(f'{out_folder}/{start_overlap}_{end_overlap}.wav',
+#                     format="wav")  # Exports to a wav file in the current path.
+#
+#
+# if __name__ == '__name__':
+#
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--in-audio-path', type=str, help="Input audio path")
+#     parser.add_argument('--in-lab-path', type=str, help="Input lab path")
+#     parser.add_argument('--out-lab-path', type=str, help="Output lab path")
+#     args = parser.parse_args()
+#
+#     # SAMPLE_URI = "ES2005a"
+#     # SAMPLE_WAV = f"../example/audios/16k/{SAMPLE_URI}.wav"
+#     # SAMPLE_REF = f"../exp/{SAMPLE_URI}.rttm"
+#
+#     SAMPLE_WAV = args.in_audio_path
+#     SAMPLE_LAB = args.in_lab_path
+#     SAMPLE_LAB_OUT = args.out_lab_path
+#
+#     # 1. visit hf.co/pyannote/segmentation and accept user conditions
+#     # 2. visit hf.co/settings/tokens to create an access token
+#     # 3. instantiate pretrained model
+#
+#     model = Model.from_pretrained("pyannote/segmentation",
+#                                   use_auth_token="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")
+#
+#     # Voice activity detection
+#     pipeline = VoiceActivityDetection(segmentation=model)
+#     HYPER_PARAMETERS = {
+#         # onset/offset activation thresholds
+#         "onset": 0.5, "offset": 0.5,
+#         # remove speech regions shorter than that many seconds.
+#         "min_duration_on": 0.0,
+#         # fill non-speech regions shorter than that many seconds.
+#         "min_duration_off": 0.0
+#     }
+#     pipeline.instantiate(HYPER_PARAMETERS)
+#
+#     # vad = pipeline(SAMPLE_WAV)
+#     # `vad` is a pyannote.core.Annotation instance containing speech regions
+#
+#     # Overlapped speech detection
+#     pipeline = OverlappedSpeechDetection(segmentation=model)
+#     pipeline.instantiate(HYPER_PARAMETERS)
+#     osd = pipeline(SAMPLE_WAV)
+#     # `osd` is a pyannote.core.Annotation instance containing overlapped speech regions
+#
+#     print(len(osd))
+#     dic = osd.for_json()
+#     print(dic)
+#     print("\n------------------------------------------------------------\n")
+#
+#     # StartOverlap = []
+#     # EndOverlap = []
+#     # for a in dic['content']:
+#     #     for key, value in a['segment'].items():
+#     #         if key == 'start':
+#     #             StartOverlap.append(value)
+#     #         elif key == 'end':
+#     #             EndOverlap.append(value)
+#     # print("StartOverlaping-> ", StartOverlap)
+#     # print("EndOverlaping-> ", EndOverlap, "\n------------------------------------------\n")
+#     # overlap = []
+#     # with open(SAMPLE_REF, 'r') as reader:
+#     #     with open(SAMPLE_REF, 'r+') as writer:
+#     #         i = 0
+#     #         for x in reader:
+#     #             data = x.split(' ')
+#     #             TalkStart = float(data[3])
+#     #             duration = float(data[4])
+#     #             if i < len(StartOverlap):
+#     #                 if TalkStart <= StartOverlap[i] <= TalkStart + duration:
+#     #                     overlap.append(True)
+#     #                     writer.write(x.removesuffix('\n') + " T\n")
+#     #                 # impossible in our case because the segments r divided by fluent of speech
+#     #                 elif StartOverlap[i] <= TalkStart <= EndOverlap[i]:
+#     #                     overlap.append(True)
+#     #                     writer.write(x.removesuffix('\n') + " T\n")
+#     #                 else:
+#     #                     overlap.append(False)
+#     #                     writer.write(x.removesuffix('\n') + " F\n")
+#     #                 # Overlap still not over
+#     #                 if TalkStart + duration < EndOverlap[i]:
+#     #                     i -= 1
+#     #             else:
+#     #                 overlap.append(False)
+#     #                 writer.write(x.removesuffix('\n') + " F\n")
+#     #             i += 1
+#     #         # print(f"begin = {begging} and duration = {duration}\n")
+#     # print(overlap)
+#     # print(len(overlap))
+#
+#     fixed_value = 0.001
+#     StartOverlap = []
+#     EndOverlap = []
+#     for a in dic['content']:
+#         for key, value in a['segment'].items():
+#             if key == 'start':
+#                 StartOverlap.append(round(value, 3))
+#             elif key == 'end':
+#                 EndOverlap.append(round(value, 3))
+#     # print("StartOverlaping-> ", StartOverlap)
+#     # print("EndOverlaping-> ", EndOverlap, "\n------------------------------------------\n")
+#
+#     # Open the output_folder for the output lab
+#     parent_path = os.path.dirname(os.path.normpath(SAMPLE_LAB_OUT))
+#     try:
+#         os.makedirs(parent_path)
+#     except OSError as exc:  # Python >2.5
+#         if exc.errno == errno.EEXIST and os.path.isdir(parent_path):
+#             pass
+#         else:
+#             raise
+#     # Start writing the new lab file with T/F if there is an overlap + extract all the sub overlaps from the wav
+#     with open(SAMPLE_LAB, 'r') as reader:
+#         with open(SAMPLE_LAB_OUT, 'w') as writer:
+#             print("sdfbsdfbsdf")
+#             i = 0
+#             for x in reader:
+#                 data = x.split('\t')
+#                 # data = x.split(" ")
+#                 TalkStart = round(float(data[0]), 3)
+#                 TalkEnd = round(float(data[1]), 3)
+#                 if i < len(StartOverlap):
+#                     if TalkStart <= StartOverlap[i] <= TalkEnd:
+#                         writer.write(str(TalkStart) + "\t" + str(StartOverlap[i]) + "\tspeech\tF\n")
+#                         if EndOverlap[i] < TalkEnd:
+#                             writer.write(str(round(StartOverlap[i] + fixed_value, 3)) + "\t" + str(
+#                                 EndOverlap[i]) + "\tspeech\tT\n")  # OVERLAP
+#                             extract_sub_recording_from_wav(SAMPLE_WAV, round(StartOverlap[i] + fixed_value, 3),
+#                                                            EndOverlap[i])
+#                             writer.write(
+#                                 str(round(EndOverlap[i] + fixed_value, 3)) + "\t" + str(TalkEnd) + "\tspeech\tF\n")
+#                         else:
+#                             writer.write(str(round(StartOverlap[i] + fixed_value, 3)) + "\t" + str(
+#                                 TalkEnd) + "\tspeech\tT\n")  # OVERLAP
+#                             extract_sub_recording_from_wav(SAMPLE_WAV, round(StartOverlap[i] + fixed_value, 3), TalkEnd)
+#                     # impossible in our case because the segments r divided by fluent of speech
+#                     elif StartOverlap[i] <= TalkStart <= EndOverlap[i]:
+#                         if EndOverlap[i] < TalkEnd:
+#                             writer.write(str(TalkStart) + "\t" + str(EndOverlap[i]) + "\tspeech\tT\n")  # OVERLAP
+#                             writer.write(
+#                                 str(round(EndOverlap[i] + fixed_value, 3)) + "\t" + str(TalkEnd) + "\tspeech\tF\n")
+#                             extract_sub_recording_from_wav(SAMPLE_WAV, TalkStart, EndOverlap[i])
+#                         else:
+#                             writer.write(str(TalkStart) + "\t" + str(TalkEnd) + "\tspeech\tT\n")  # OVERLAP
+#                             extract_sub_recording_from_wav(SAMPLE_WAV, TalkStart, TalkEnd)
+#                     else:
+#                         writer.write(str(TalkStart) + "\t" + str(TalkEnd) + "\tspeech\tF\n")
+#                     # Overlap still not over
+#                     if TalkEnd < EndOverlap[i]:
+#                         i -= 1
+#                 else:
+#                     writer.write(str(TalkStart) + "\t" + str(TalkEnd) + "\tspeech\tF\n")
+#                 i += 1
+#             # print(f"begin = {begging} and duration = {duration}\n")
+#     # print(overlap)
+#     # print(len(overlap))
+#
+#     # # Resegmentation
+#     # pipeline = Resegmentation(segmentation=model,
+#     #                           diarization="baseline")
+#     # pipeline.instantiate(HYPER_PARAMETERS)
+#     # resegmented_baseline = pipeline({"audio": SAMPLE_WAV, "baseline": vad})
+#     # # where `baseline` should be provided as a pyannote.core.Annotation instance
+#
+#     # # Raw scores:
+#     # inference = Inference(model)
+#     # segmentation = inference(SAMPLE_WAV)
+#
+#     # # `segmentation` is a pyannote.core.SlidingWindowFeature
+#     # # instance containing raw segmentation scores like the
+#     # # one pictured above(output)
